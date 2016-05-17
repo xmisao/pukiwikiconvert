@@ -33,19 +33,6 @@ def convert_name_euc2utf(name)
   }.join('_') + name_ext.to_s
 end
 
-def convert_filename_euc2utf(src_path, dst_dir)
-  info = get_file_info(src_path)
-
-  src_file = File.basename(src_path)
-  dst_file = convert_name_euc2utf(src_file)
-  dst_path = dst_dir + '/' + dst_file
-
-  open(dst_path, 'wb'){|f|
-    f.print info[:content]
-  }
-  File.utime(Time.now, info[:mtime], dst_path)
-end
-
 def get_file_info(path)
   open(path, 'rb'){|f|
     {content: f.read, mtime: f.mtime}
@@ -62,12 +49,21 @@ def get_gz_file_info(path)
   result
 end
 
+def src_path_to_dst_path(src_path, dst_dir)
+  src_file = File.basename(src_path)
+  dst_file = convert_name_euc2utf(src_file)
+  dst_dir + '/' + dst_file
+end
+
+def convert_filename_euc2utf(src_path, dst_dir)
+  dst_path = src_path_to_dst_path(src_path, dst_dir)
+  FileUtils.cp(src_path, dst_path)
+end
+
 def convert_filename_and_content_euc2utf(src_path, dst_dir)
   info = get_file_info(src_path)
 
-  src_file = File.basename(src_path)
-  dst_file = convert_name_euc2utf(src_file)
-  dst_path = dst_dir + '/' + dst_file
+  dst_path = src_path_to_dst_path(src_path, dst_dir)
 
   open(dst_path, 'wb'){|f|
     f.print NKF.nkf('-w', info[:content])
@@ -78,9 +74,7 @@ end
 def convert_filename_and_compressed_content_euc2utf(src_path, dst_dir)
   info = get_gz_file_info(src_path)
 
-  src_file = File.basename(src_path)
-  dst_file = convert_name_euc2utf(src_file)
-  dst_path = dst_dir + '/' + dst_file
+  dst_path = src_path_to_dst_path(src_path, dst_dir)
 
   open(dst_path, 'wb'){|f|
     g = Zlib::GzipWriter.new(f)

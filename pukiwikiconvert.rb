@@ -2,7 +2,7 @@ require 'fileutils'
 require 'nkf'
 require 'zlib'
 
-PUKIWIKI_DIRS = ['wiki', 'backup', 'attach', 'diff']
+PUKIWIKI_DIRS = ['wiki', 'backup', 'attach', 'diff', 'cache']
 
 def has_pukiwiki_dir_struct(dir)
   PUKIWIKI_DIRS.each{|pd|
@@ -120,6 +120,10 @@ def main(argv)
 
   each_file(src_dir, "/attach/*_*"){|src_path|
     convert_filename_euc2utf(src_path, dst_dir + '/attach')
+  }
+
+  each_file(src_dir, "/cache/*.*"){|src_path|
+    convert_filename_and_content_euc2utf(src_path, dst_dir + '/cache')
   }
 
   STDOUT.puts 'Done.'

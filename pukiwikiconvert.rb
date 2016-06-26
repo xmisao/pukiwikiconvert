@@ -55,6 +55,12 @@ def src_path_to_dst_path(src_path, dst_dir)
   dst_dir + '/' + dst_file
 end
 
+def src_path_to_dst_path_no_convert(src_path, dst_dir)
+  src_file = File.basename(src_path)
+  dst_file = src_file
+  dst_dir + '/' + dst_file
+end
+
 def convert_filename_euc2utf(src_path, dst_dir)
   dst_path = src_path_to_dst_path(src_path, dst_dir)
   FileUtils.cp(src_path, dst_path)
@@ -64,6 +70,17 @@ def convert_filename_and_content_euc2utf(src_path, dst_dir)
   info = get_file_info(src_path)
 
   dst_path = src_path_to_dst_path(src_path, dst_dir)
+
+  open(dst_path, 'wb'){|f|
+    f.print NKF.nkf('-w', info[:content])
+  }
+  File.utime(Time.now, info[:mtime], dst_path)
+end
+
+def convert_content_euc2utf(src_path, dst_dir)
+  info = get_file_info(src_path)
+
+  dst_path = src_path_to_dst_path_no_convert(src_path, dst_dir)
 
   open(dst_path, 'wb'){|f|
     f.print NKF.nkf('-w', info[:content])
@@ -122,8 +139,16 @@ def main(argv)
     convert_filename_euc2utf(src_path, dst_dir + '/attach')
   }
 
-  each_file(src_dir, "/cache/*.*"){|src_path|
+  each_file(src_dir, "/cache/*.rel"){|src_path|
     convert_filename_and_content_euc2utf(src_path, dst_dir + '/cache')
+  }
+
+  each_file(src_dir, "/cache/*.ref"){|src_path|
+    convert_filename_and_content_euc2utf(src_path, dst_dir + '/cache')
+  }
+
+  each_file(src_dir, "/cache/*.dat"){|src_path|
+    convert_content_euc2utf(src_path, dst_dir + '/cache')
   }
 
   STDOUT.puts 'Done.'
